@@ -169,8 +169,4 @@ snowflake-sales-dashboard/
 └── README.md
 ```
 
-## 👩‍💻 Author
 
-**Rosol Tuhul**
-
-Computer Engineering graduate focused on software engineering, cloud technologies, and data-driven applications.

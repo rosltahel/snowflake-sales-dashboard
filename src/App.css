@@ -1,0 +1,92 @@
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px;
+  font-family: Arial, sans-serif;
+}
+
+h1 {
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  margin-bottom: 30px;
+  color: #666;
+}
+
+.cards {
+  display: flex;
+  gap: 20px;
+}
+
+.card {
+  flex: 1;
+  padding: 25px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.card h3 {
+  margin-top: 0;
+  color: #555;
+}
+
+.card p {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+
+.chart-section {
+  margin-top: 40px;
+  padding: 25px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.chart-section h2 {
+  margin-top: 0;
+  margin-bottom: 25px;
+}
+
+
+.customers-section {
+  margin-top: 40px;
+  padding: 25px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.customers-section h2 {
+  margin: 0;
+}
+
+.section-subtitle {
+  margin-top: 6px;
+  margin-bottom: 25px;
+  color: #666;
+}
+
+.customers-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.customers-table th,
+.customers-table td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.customers-table th {
+  font-size: 14px;
+  color: #666;
+}
+
+.customers-table tbody tr:hover {
+  background: #f7f7f7;
+}

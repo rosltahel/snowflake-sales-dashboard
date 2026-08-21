@@ -1,116 +1,103 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+
 import "./App.css";
 
+import { DashboardHeader } from "./components/DashboardHeader.jsx";
+import { DateFilter } from "./components/DateFilter.jsx";
+import { ErrorState } from "./components/ErrorState.jsx";
+import { InsightsPanel } from "./components/InsightsPanel.jsx";
+import { MetricCard } from "./components/MetricCard.jsx";
+import { OrdersStatusChart } from "./components/OrdersStatusChart.jsx";
+import { OrdersTrendChart } from "./components/OrdersTrendChart.jsx";
+import { RevenueChart } from "./components/RevenueChart.jsx";
+import { DashboardSkeleton } from "./components/Skeleton.jsx";
+import { TopCustomersTable } from "./components/TopCustomersTable.jsx";
+
+import { useDashboardData } from "./hooks/useDashboardData.js";
+import { DEFAULT_RANGE } from "./lib/dateRanges.js";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+  formatCurrency,
+  formatCurrencyCompact,
+  formatNumber,
+  percentChange,
+} from "./lib/format.js";
 
 function App() {
-  const [data, setData] = useState(null);
-  const [error, setError] = useState("");
+  const [range, setRange] = useState(DEFAULT_RANGE);
+  const { data, error, isLoading, isRefetching, retry } = useDashboardData(range);
 
-  useEffect(() => {
-    fetch("/.netlify/functions/dashboard")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to load dashboard data");
-        }
-
-        return response.json();
-      })
-      .then((result) => {
-        setData(result);
-      })
-      .catch((err) => {
-        setError(err.message);
-      });
-  }, []);
-
-  if (error) {
-    return <p>Error: {error}</p>;
-  }
-
-  if (!data) {
-    return <p>Loading dashboard...</p>;
-  }
+  const previous = data?.previousPeriod ?? null;
+  const comparisonLabel = previous ? "vs. previous period" : undefined;
 
   return (
-    <div className="app">
-      <h1>Snowflake Sales Analytics</h1>
+    <div className="dashboard">
+      <DashboardHeader dataBounds={data?.dataBounds} isRefetching={isRefetching} />
 
-      <p className="subtitle">
-        Dashboard powered by Snowflake sample data
-      </p>
+      <DateFilter
+        value={range}
+        onChange={setRange}
+        activeRange={data?.range}
+        disabled={isLoading}
+      />
 
-      <div className="cards">
-        <div className="card">
-          <h3>Total Orders</h3>
-          <p>{data.totalOrders.toLocaleString()}</p>
+      {error ? (
+        <ErrorState error={error} onRetry={retry} />
+      ) : isLoading ? (
+        <DashboardSkeleton />
+      ) : (
+        <div
+          className={`dashboard__body ${isRefetching ? "dashboard__body--refetching" : ""}`}
+          aria-busy={isRefetching}
+        >
+          <div className="metric-grid">
+            <MetricCard
+              label="Total orders"
+              accent="orders"
+              value={formatNumber(data.totalOrders)}
+              change={previous ? percentChange(data.totalOrders, previous.totalOrders) : undefined}
+              comparisonLabel={comparisonLabel}
+            />
+            <MetricCard
+              label="Total revenue"
+              accent="revenue"
+              value={formatCurrencyCompact(data.totalRevenue)}
+              title={formatCurrency(data.totalRevenue)}
+              change={previous ? percentChange(data.totalRevenue, previous.totalRevenue) : undefined}
+              comparisonLabel={comparisonLabel}
+            />
+            <MetricCard
+              label="Average order value"
+              accent="revenue"
+              value={formatCurrency(data.averageOrderValue)}
+              change={
+                previous
+                  ? percentChange(data.averageOrderValue, previous.averageOrderValue)
+                  : undefined
+              }
+              comparisonLabel={comparisonLabel}
+            />
+          </div>
+
+          <InsightsPanel data={data} />
+
+          <RevenueChart data={data.monthlyTrend} rangeTo={data.range?.to} />
+
+          <div className="chart-grid">
+            <OrdersTrendChart data={data.monthlyTrend} rangeTo={data.range?.to} />
+            <OrdersStatusChart data={data.ordersByStatus} />
+          </div>
+
+          <TopCustomersTable customers={data.topCustomers} />
         </div>
+      )}
 
-        <div className="card">
-          <h3>Total Revenue</h3>
-          <p>${data.totalRevenue.toLocaleString()}</p>
-        </div>
-
-        <div className="card">
-          <h3>Average Order Value</h3>
-          <p>${data.averageOrderValue.toLocaleString()}</p>
-        </div>
-      </div>
-
-      <div className="chart-section">
-        <h2>Orders by Status</h2>
-
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data.ordersByStatus}>
-            <XAxis dataKey="status" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="total" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div className="customers-section">
-  <h2>Top Customers</h2>
-  <p className="section-subtitle">
-    Top 5 customers ranked by total order value
-  </p>
-
-  <table className="customers-table">
-    <thead>
-      <tr>
-        <th>Customer</th>
-        <th>Orders</th>
-        <th>Total Spent</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      {data.topCustomers.map((customer) => (
-        <tr key={customer.name}>
-          <td>{customer.name}</td>
-          <td>{customer.orders.toLocaleString()}</td>
-          <td>
-            ${customer.totalSpent.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
+      <footer className="dashboard__footer">
+        <p>
+          Source: <code>SNOWFLAKE_SAMPLE_DATA.TPCH_SF1</code> · queried server-side
+          through a Netlify Function
+        </p>
+      </footer>
     </div>
-
-    
   );
 }
 
